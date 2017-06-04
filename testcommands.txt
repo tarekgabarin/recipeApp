@@ -1,0 +1,67 @@
+[
+  {
+    "_id": "5931b2ab019f6418dcb555e6",
+    "name": "cornflakes",
+    "description": "it's food",
+    "steps": "lol just add milk n shit",
+    "category": "breakfast",
+    "__v": 0,
+    "comments": [],
+    "ingredients": [
+      "box of cornflakes",
+      "milk"
+    ]
+  },
+  {
+    "_id": "5931bdc31b576b2ebcfc9b1c",
+    "name": "animal",
+    "description": "delicious",
+    "steps": "kill animal then eat it",
+    "category": "breakfast",
+    "__v": 0,
+    "comments": [],
+    "ingredients": [
+      "animal",
+      "killing weapon"
+    ]
+  },
+  {
+    "_id": "5931c15c0737051288f05c37",
+    "name": "candy",
+    "description": "so gooood",
+    "steps": "GET IN MA BELLY",
+    "category": "snack",
+    "__v": 0,
+    "comments": [],
+    "ingredients": [
+      "cocaine",
+      "whipped cream"
+    ]
+  },
+  {
+    "_id": "59345e7d564005311c7066d2",
+    "name": "Eventually",
+    "description": "the jokes on me",
+    "steps": "and nothing",
+    "category": "dep",
+    "__v": 0,
+    "comments": [],
+    "ingredients": [
+      "is ever",
+      "fun"
+    ]
+  },
+  {
+    "_id": "59345eff564005311c7066d3",
+    "name": "cupcakes",
+    "description": "I LIKE CUPCAKES",
+    "steps": "THEY ARE DELICIOUS",
+    "category": "fwfefrewfr",
+    "__v": 0,
+    "comments": [],
+    "ingredients": [
+      "FUCK",
+      "YOU"
+    ]
+  }
+]
