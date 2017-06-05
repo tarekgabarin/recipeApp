@@ -4,9 +4,9 @@ const User = require('../models/user');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
+const verification = require('verification');
 
-
-router = express.Router();
+let router = express.Router();
 
 router.get('/', (req, res, next) => {
     User.find({}, (err, users) => {
@@ -51,6 +51,49 @@ router.post('/register', function(req, res, next){
     });
 
 });
+
+/// test this out
+
+router.post('/login', (req, res, next) => {
+    passport.authenticate('local', (err, user, info) => {
+        if(err) return next(err);
+
+        if(!user){
+            return res.json(403, {
+                message: info
+            })
+        }
+    });
+
+    req.logIn(user, (err) => {
+        if (err) return next(err);
+
+        return res.json({
+            message: 'user authenticated!'
+        });
+    });
+
+    // let token = verification.getToken(user);
+
+    res.status(200).json({
+        status: 'Login successful!',
+        success: true,
+        token: token
+    });
+
+});
+
+router.get('/logout', (req, res) => {
+    req.logout();
+    res.status(200).json({
+        status: 'logging'
+    })
+});
+
+
+
+
+
 
 /*
 

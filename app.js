@@ -27,7 +27,7 @@ const port = 3000;
 
 app.listen(port);
 
-/*
+
 
 let User = require('./models/user');
 app.use(passport.initialize());
@@ -35,7 +35,7 @@ passport.use(new LocalStrategy(User.authenticate()));
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
-*/
+
 
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -49,6 +49,32 @@ app.use('/recipes',recipeRouter);
 app.get('/', function(req, res){
   res.send('Hey, this is your database!')
 });
+
+app.use((req, res, next) => {
+    let err = new Error('Not Found');
+    err.status = 404;
+    next(err);
+});
+
+if (app.get('env') === 'development') {
+    app.use((err, req, res, next) => {
+        res.status(err.status || 500);
+        res.json({
+            message: err.message,
+            error: err
+        });
+    });
+}
+
+app.use((err, req, res, next) =>{
+    res.status(err.status || 500);
+    res.json({
+        message: err.message,
+        error: {}
+    })
+});
+
+
 
 
 module.exports = app;

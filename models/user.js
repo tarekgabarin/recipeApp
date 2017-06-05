@@ -32,19 +32,20 @@ let UserSchema = Schema({
     required: true,
   },
 
+  admin: {
+    type: boolean,
+      defualt: false
+  },
+
   usersRecipes: [{type: Schema.Types.ObjectId, ref:'Recipe'}],
 
   userComments: [{type: Schema.Types.ObjectId, ref: 'Recipe'}]
 
 });
 
+User.plugin(passportLocalMongoose);
 
-
-let User = mongoose.model('User', UserSchema);
-
-// User.plugin(passportLocalMongoose);
-
-module.exports = User;
+module.exports = mongoose.model('User', UserSchema);
 
 
 /*
