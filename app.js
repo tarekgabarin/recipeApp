@@ -8,6 +8,7 @@ let bcrypt = require('bcrypt');
 let passport = require('passport');
 let LocalStrategy = require('passport-local').Strategy;
 let config = require('./config');
+let logger = require('morgan');
 
 mongoose.connect(config.mongoUrl);
 

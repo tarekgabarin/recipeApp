@@ -70,6 +70,9 @@ router.get('/showrecipes/category/:categoryname', (req, res) => {
 // Now it's working, good stuff.
 
 router.post('/addrecipe', (req, res) => {
+
+
+    /// Change this to use the model.insert because it's faster apparently.
   Recipe.create({
       name: req.body.name,
       description: req.body.description,
@@ -79,7 +82,7 @@ router.post('/addrecipe', (req, res) => {
   }, (err, recipes) => {
     if (err) throw err;
 
-    // Recipe.save();
+    // Recipe.save() ---> I don't need to call save(); if I am using create
 
     res.json(recipes);
   });
