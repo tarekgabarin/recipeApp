@@ -9,6 +9,8 @@ const verification = require('../verification');
 
 router = express.Router();
 
+router.use(bodyParser.json());
+
 router.get('/', (req, res) => {
   res.json('Here are the recipes!')
 });
@@ -73,10 +75,8 @@ router.get('/showrecipes/category/:categoryname', (req, res) => {
 
 //// the following three routes can only be done by registered users
 
-router.post('/addrecipe', (req, res) => {
+router.post('/addrecipe', verification.checkIfUserExists, (req, res, next) => {
 
-
-    /// Change this to use the model.insert because it's faster apparently.
   Recipe.create({
       name: req.body.name,
       description: req.body.description,
@@ -86,7 +86,6 @@ router.post('/addrecipe', (req, res) => {
   }, (err, recipes) => {
     if (err) throw err;
 
-    // Recipe.save() ---> I don't need to call save(); if I am using create
 
     res.json(recipes);
   });
@@ -94,10 +93,12 @@ router.post('/addrecipe', (req, res) => {
 
 // See if this works
 
-router.put('/showrecipes/:recipeId/edit', (req, res) => {
+router.put("/showrecipes/:recipeId", verification.checkIfUserExists, (req, res) => {
+
+        let query = {_id: req.params.recipeId};
 
 
-    Recipe.findByIdAndUpdate(req.params.recipeId, {
+    Recipe.findByIdAndUpdate(query, {
         $set: req.body
     }, {
         new: true
@@ -105,32 +106,31 @@ router.put('/showrecipes/:recipeId/edit', (req, res) => {
         if (err) throw err;
         res.json(recipe)
     })
-
-    /*
-
-    Recipe.findOneAndUpdate({name: req.params.recipename}, req.body, (err, recipes) => {
-        if (err) throw err;
-
-        res.json(recipes)
-
-    });
-
-    */
-});
+    })
 
 // It's working, thank god
 
-router.delete('/deleterecipe/:recipename', (req, res) => {
+    router.delete("/showrecipes/:recipeId", verification.checkIfUserExists, (req, res) => {
 
-    let nameQuery = {name: req.params.recipename};
+        let query = {_id: req.params.recipeId};
 
-    Recipe.findOneAndRemove(nameQuery, (err, recipe) => {
-        if (err) throw err;
+        Recipe.findByIdAndRemove(query, (err, recipe) => {
+            if (err) throw err;
 
-        res.send('Dish was succesfully deleted!')
+            res.send('Recipe was succesfully deleted');
+        })
+
+    })
+
+    .get("/showrecipes/:recipeId", (req, res) => {
+        let nameQuery = {_id: req.params.recipeId};
+
+        Recipe.findOne(nameQuery, (err, recipes) => {
+            if (err) throw err;
+
+            res.json(recipes);
+        })
     });
-
-});
 
 // test this
 
