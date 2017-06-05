@@ -24,8 +24,8 @@ router.get('/showrecipes', (req, res) => {
 
 // Is working.
 
-router.get("/showrecipes/:recipename", (req, res) => {
-    let nameQuery = {name: req.params.recipename};
+router.get("/showrecipes/:recipeId", (req, res) => {
+    let nameQuery = {_id: req.params.recipeId};
 
     Recipe.findOne(nameQuery, (err, recipes) => {
         if (err) throw err;
@@ -94,14 +94,28 @@ router.post('/addrecipe', (req, res) => {
 
 // See if this works
 
-router.put('editrecipe/:recipename/:editedField', (req, res) => {
+router.put('/showrecipes/:recipeId/edit', (req, res) => {
 
-    Recipe.findOneAndUpdate({name: req.params.recipename}, {$set: req.params.editedField}, {new: true}, (err, recipes) => {
+
+    Recipe.findByIdAndUpdate(req.params.recipeId, {
+        $set: req.body
+    }, {
+        new: true
+    }, (err, recipe) => {
+        if (err) throw err;
+        res.json(recipe)
+    })
+
+    /*
+
+    Recipe.findOneAndUpdate({name: req.params.recipename}, req.body, (err, recipes) => {
         if (err) throw err;
 
         res.json(recipes)
 
     });
+
+    */
 });
 
 // It's working, thank god
