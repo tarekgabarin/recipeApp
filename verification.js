@@ -4,11 +4,11 @@ const config = require('./config.js');
 
 // test this out
 
-module.exports.getToken = (user) => {
+exports.getToken = (user) => {
     return jwt.sign(user, config.secretKey);
 };
 
-module.exports.checkIfUserExists = (req, res, next) => {
+exports.checkIfUserExists = (req, res, next) => {
 
     let token = req.body.token || req.query.token || req.headers['x-access-token'];
 
@@ -41,3 +41,4 @@ module.exports.checkIfUserExists = (req, res, next) => {
     }
 
 };
+

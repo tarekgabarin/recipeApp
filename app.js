@@ -9,6 +9,7 @@ let passport = require('passport');
 let LocalStrategy = require('passport-local').Strategy;
 let config = require('./config');
 let logger = require('morgan');
+let cookieParser = require('cookie-parser');
 
 mongoose.connect(config.mongoUrl);
 
@@ -34,6 +35,8 @@ app.use(passport.initialize());
 passport.use(new LocalStrategy(User.authenticate()));
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
+
+app.use(cookieParser());
 
 
 

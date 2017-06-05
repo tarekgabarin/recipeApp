@@ -4,7 +4,7 @@ const Recipe = require('../models/recipe');
 const jwt = require('jsonwebtoken');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
-const verification = require('verification');
+const verification = require('../verification');
 
 
 router = express.Router();
@@ -70,6 +70,9 @@ router.get('/showrecipes/category/:categoryname', (req, res) => {
 
 // Now it's working, good stuff.
 
+
+//// the following three routes can only be done by registered users
+
 router.post('/addrecipe', (req, res) => {
 
 
@@ -93,7 +96,7 @@ router.post('/addrecipe', (req, res) => {
 
 router.put('editrecipe/:recipename/:editedField', (req, res) => {
 
-    Recipe.findOneAndUpdate({name: req.params.recipename}, {$set: req.body}, {new: true}, (err, recipes) => {
+    Recipe.findOneAndUpdate({name: req.params.recipename}, {$set: req.params.editedField}, {new: true}, (err, recipes) => {
         if (err) throw err;
 
         res.json(recipes)
@@ -115,9 +118,11 @@ router.delete('/deleterecipe/:recipename', (req, res) => {
 
 });
 
+// test this
+
 router.get('/showrecipes/byuser/:username', (req, res) => {
 
-    let query = {postedBy: req.params.username}
+    let query = {postedBy: req.params.username};
 
     Recipe.find(query, (err, recipes) => {
         if (err) throw err;

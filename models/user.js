@@ -2,20 +2,34 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const passportLocalMongoose = require('passport-local-mongoose');
+const passport = require('passport');
 
 let Schema = mongoose.Schema;
 
 
-let UserSchema = Schema({
+let User = Schema({
+
   name: {
     type: String
   },
+
+
+  /*
+
+  The passport plugin already inputs username and password into our Schema
 
   username: {
     type: String,
     unique: true,
     required: true
   },
+
+   password: {
+   type: String,
+   required: true,
+   },
+
+  */
 
   profilePic: {
     type: String
@@ -27,13 +41,10 @@ let UserSchema = Schema({
     required: true
   },
 
-  password: {
-    type: String,
-    required: true,
-  },
+
 
   admin: {
-    type: boolean,
+    type: Boolean,
       defualt: false
   },
 
@@ -43,9 +54,13 @@ let UserSchema = Schema({
 
 });
 
-User.plugin(passportLocalMongoose);
 
-module.exports = mongoose.model('User', UserSchema);
+
+let options = ({missingPasswordError: "Incorrect password, try again"});
+
+User.plugin(passportLocalMongoose, options);
+
+module.exports = mongoose.model('User', User);
 
 
 /*
