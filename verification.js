@@ -4,6 +4,8 @@ const config = require('./config.js');
 
 // test this out
 
+
+
 exports.getToken = (user) => {
     return jwt.sign(user, config.secretKey);
 };

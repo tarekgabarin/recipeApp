@@ -13,6 +13,11 @@ let commentSchema = Schema({
     max: 5,
   },
 
+  recipeItem: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Recipe'
+  },
+
   comment: {
     type: String,
     required: true
@@ -21,7 +26,16 @@ let commentSchema = Schema({
   postedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
-  }
+  },
+
+  likedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+
+ favouredBy: {
+    type: mongoose.Schema.Types.ObjectId
+ }
 });
 
 let Comment = mongoose.model('Comment', commentSchema);
@@ -67,6 +81,7 @@ let recipeSchema = Schema({
 let Recipe = mongoose.model('Recipe', recipeSchema);
 
 module.exports = Recipe;
+module.exports = Comment;
 
 /// refactor this so that these are in the router, not in the models file
 

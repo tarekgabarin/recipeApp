@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const verification = require('../verification');
+const Comment = require('../models/recipe');
 
 
 router = express.Router();
@@ -34,6 +35,8 @@ router.get("/showrecipes/:recipeId", (req, res) => {
 
         res.json(recipes);
     })
+        //// Don't know if this is correct
+        .populate('comment.recipeItem');
 });
 
 // I got it to work, the url should have been more specific
@@ -106,7 +109,7 @@ router.put("/showrecipes/:recipeId", verification.checkIfUserExists, (req, res) 
         if (err) throw err;
         res.json(recipe)
     })
-    })
+});
 
 // It's working, thank god
 
@@ -120,9 +123,9 @@ router.put("/showrecipes/:recipeId", verification.checkIfUserExists, (req, res) 
             res.send('Recipe was succesfully deleted');
         })
 
-    })
+    });
 
-    .get("/showrecipes/:recipeId", (req, res) => {
+    router.get("/showrecipes/:recipeId", (req, res) => {
         let nameQuery = {_id: req.params.recipeId};
 
         Recipe.findOne(nameQuery, (err, recipes) => {
@@ -130,6 +133,25 @@ router.put("/showrecipes/:recipeId", verification.checkIfUserExists, (req, res) 
 
             res.json(recipes);
         })
+
+            .populate('comments')
+
+            .exec((err) => {
+                if (err) throw err;
+            })
+    });
+
+    router.post("/showrecipes:/:recipeId/addcomment", (req, res, next) => {
+
+        Comment.create({
+            rating: req.body.rating,
+            comment: req.body.comment,
+            postedBy: postedBy,
+            date: Date.now(),
+            recipeItem: recipeId
+        })
+
+
     });
 
 // test this
@@ -142,6 +164,7 @@ router.get('/showrecipes/byuser/:username', (req, res) => {
         if (err) throw err;
         res.json(recipes)
     })
+
 });
 
 

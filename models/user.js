@@ -50,7 +50,13 @@ let User = Schema({
 
   usersRecipes: [{type: Schema.Types.ObjectId, ref:'Recipe'}],
 
-  userComments: [{type: Schema.Types.ObjectId, ref: 'Recipe'}]
+  userComments: [{type: Schema.Types.ObjectId, ref: 'Comment'}],
+
+  usersFavouriteRecipes: [{type: Schema.Types.ObjectId, ref: 'Recipe'}],
+
+  usersLikedRecipes: [{type: Schema.Types.ObjectId, ref: 'Recipe'}]
+
+
 
 });
 

@@ -6,7 +6,6 @@ let recipeRouter = require('./routes/recipeRouter');
 let userRouter = require('./routes/userRouter');
 let bcrypt = require('bcrypt');
 let passport = require('passport');
-let LocalStrategy = require('passport-local').Strategy;
 let config = require('./config');
 let logger = require('morgan');
 let cookieParser = require('cookie-parser');
@@ -28,16 +27,7 @@ const port = 3000;
 
 app.listen(port);
 
-
-
-let User = require('./models/user');
-app.use(passport.initialize());
-passport.use(new LocalStrategy(User.authenticate()));
-passport.serializeUser(User.serializeUser());
-passport.deserializeUser(User.deserializeUser());
-
 app.use(cookieParser());
-
 
 
 app.use(express.static(path.join(__dirname, 'public')));
