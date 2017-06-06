@@ -1,0 +1,22 @@
+I have to use the native MongoDB driver for adding reviews of recipes and for storing a persons reviews, liked recipes,
+own submitted recipes on their profile.
+
+For submitting a review of a recipe:
+
+    1. I first take the persons username and see if there is already a review in the recipes review section with that name.
+    If there is, the review cannot be submitted unless the user deletes the review that he already has for that dish.
+    2. I create the user's review. I store it in the user's document, in the array containing their reviews, and then I
+    look up the name of the recipe in the document of the review, go fetch the objectId of that recipe, and then store the
+    review inside the array within the recipe document that contains the reviews for it. I will have to add three new properties
+    to the Recipe Schema. One will be the number of review scores submitted, which will be stored as a number. Everytime
+    a review is submitted, the number will increase. Then, there is another property which is all the rating all added up.
+    Finally, there is the average, which will come about through a function that calculates the mean average using the total
+    number of reviews and all the review scores added up. Also, if the users review for the recipe is higher than 3, then
+    the recipe is added to the user's liked dishes array. 
+
+
+For deleting a review:
+
+    1. The ObjectId, and the name of the recipe it is a review of, are stored in two variable. Then, using the ObjectId,
+     I search the users profile for it and delete. Then, using the name of the variable, I fetch the document of the recipe,
+     and remove the review from it. Then I will have to recalculate the average when a review is removed.
