@@ -12,7 +12,11 @@ For submitting a review of a recipe:
     a review is submitted, the number will increase. Then, there is another property which is all the rating all added up.
     Finally, there is the average, which will come about through a function that calculates the mean average using the total
     number of reviews and all the review scores added up. Also, if the users review for the recipe is higher than 3, then
-    the recipe is added to the user's liked dishes array. 
+    the recipe is added to the user's liked dishes array. There is a serperate collection named ingredients. Each document
+    in it is a single commonly used ingredient, it's price (using the wallmart api), and it's category (i.e "fruit", "meat etc").
+    There will be a total price property on the Recipe docuement. When the document is created, it will search the names
+    of all the ingredients in the ingredients array, look up their prices by fetching the data from the ingredients collection,
+    and the them up then set the Recipe's price property to it's total. 
 
 
 For deleting a review:
