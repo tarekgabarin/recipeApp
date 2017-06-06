@@ -13,10 +13,7 @@ let User = Schema({
     type: String
   },
 
-
-  /*
-
-  The passport plugin already inputs username and password into our Schema
+  // The passport plugin already inputs username and password into our Schema
 
   username: {
     type: String,
@@ -29,7 +26,7 @@ let User = Schema({
    required: true,
    },
 
-  */
+
 
   profilePic: {
     type: String
@@ -67,38 +64,3 @@ let options = ({missingPasswordError: "Incorrect password, try again"});
 User.plugin(passportLocalMongoose, options);
 
 module.exports = mongoose.model('User', User);
-
-
-/*
-
-Refactor these so that they are apart of userRouter
-
-module.exports.getUserByName = (username, callback) => {
-  let nameQuery = {userName: username};
-  User.findOne(nameQuery, callback);
-};
-
-module.exports.getUserById = (id, callback) => {
-  User.findOne(id, callback);
-};
-
-*/
-
-/*
-
-module.exports.createUser = (userObj, callback) => {
-
-  bcrypt.genSalt(10, function(err, salt){
-    bcrypt.hash(userObj.password, salt, function(err, hash){
-      if (err) throw err;
-      userObj.password = hash;
-      userObj.save(callback);
-    })
-  })
-};
-
-module.exports.deleteUser = (username, callback) => {
-  User.findOneAndRemove({userName: username}, callback);
-};
-
-    */

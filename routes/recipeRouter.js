@@ -7,6 +7,8 @@ const mongoose = require('mongoose');
 const verification = require('../verification');
 const Comment = require('../models/recipe');
 
+// I temporarily removed verification.checkIfUserExists to see if all this database stuff works
+
 
 router = express.Router();
 
@@ -18,11 +20,23 @@ router.get('/', (req, res) => {
 
 // Is working
 
+/*
+ router.get('/showrecipes', (req, res) => {
+ Recipe.find({}, (err, recipes) => {
+ if (err) throw err;
+ res.json(recipes);
+ }).});
+
+
+ */
+
+// I'm hoping this works
+
 router.get('/showrecipes', (req, res) => {
-  Recipe.find({}, (err, recipes) => {
-    if (err) throw err;
-    res.json(recipes);
-  });
+  Recipe.find({}).populate('Comment').exec((err, recipes) => {
+      if (err) throw err;
+      res.json(recipes);
+  })
 });
 
 // Is working.
@@ -36,7 +50,7 @@ router.get("/showrecipes/:recipeId", (req, res) => {
         res.json(recipes);
     })
         //// Don't know if this is correct
-        .populate('comment.recipeItem');
+      //  .populate('comment.recipeItem');
 });
 
 // I got it to work, the url should have been more specific
@@ -78,7 +92,7 @@ router.get('/showrecipes/category/:categoryname', (req, res) => {
 
 //// the following three routes can only be done by registered users
 
-router.post('/addrecipe', verification.checkIfUserExists, (req, res, next) => {
+router.post('/addrecipe', (req, res, next) => {
 
   Recipe.create({
       name: req.body.name,
@@ -96,7 +110,7 @@ router.post('/addrecipe', verification.checkIfUserExists, (req, res, next) => {
 
 // See if this works
 
-router.put("/showrecipes/:recipeId", verification.checkIfUserExists, (req, res) => {
+router.put("/showrecipes/:recipeId", (req, res) => {
 
         let query = {_id: req.params.recipeId};
 
@@ -113,7 +127,7 @@ router.put("/showrecipes/:recipeId", verification.checkIfUserExists, (req, res) 
 
 // It's working, thank god
 
-    router.delete("/showrecipes/:recipeId", verification.checkIfUserExists, (req, res) => {
+    router.delete("/showrecipes/:recipeId", (req, res) => {
 
         let query = {_id: req.params.recipeId};
 
@@ -133,12 +147,7 @@ router.put("/showrecipes/:recipeId", verification.checkIfUserExists, (req, res) 
 
             res.json(recipes);
         })
-
-            .populate('comments')
-
-            .exec((err) => {
-                if (err) throw err;
-            })
+        
     });
 
     router.post("/showrecipes:/:recipeId/addcomment", (req, res, next) => {
@@ -168,19 +177,5 @@ router.get('/showrecipes/byuser/:username', (req, res) => {
 });
 
 
-
-/*
-
-router.post('/:dishid/addcomment', function(req, res, next){
-  let newComment = new Comment({
-    rating: req.body.rating,
-    comment: req.body.comment,
-    postedBy: postedBy,
-    date: Date.now()
-  });
-
-});
-
-*/
 
 module.exports = router;
