@@ -1,3 +1,5 @@
+
+
 I have to use the native MongoDB driver for adding reviews of recipes and for storing a persons reviews, liked recipes,
 own submitted recipes on their profile.
 
@@ -16,7 +18,51 @@ For submitting a review of a recipe:
     in it is a single commonly used ingredient, it's price (using the wallmart api), and it's category (i.e "fruit", "meat etc").
     There will be a total price property on the Recipe docuement. When the document is created, it will search the names
     of all the ingredients in the ingredients array, look up their prices by fetching the data from the ingredients collection,
-    and the them up then set the Recipe's price property to it's total. 
+    and the them up then set the Recipe's price property to it's total.
+
+
+A rough sketch of the code for it:
+
+    let pendingUser = req.body.username
+
+    let alreadyCommented = false
+
+    Recipe.findById({_id: recipeId}, (err, recipeId) => {
+
+       let recipe = res.json(recipe);
+
+       let recipeObj = JSON.parse(recipe);
+
+       for (let i = 0; i < recipeObj.reviews.length; i++) {
+
+            if (recipeObj.reviews[i].postedBy === pendingUser){
+
+                 alreadyCommented = true;
+            }
+       }
+    })
+
+    if (!alreadyCommented) {
+
+        Recipe.findByIdAndUpdate({_id: recipeId}, (err, recipe) => {
+
+            if (err) throw err;
+
+                    /// Not sure if below should really be {"reviews": {rating: req.body.rating}}
+
+            Recipe.update({_id: recipe._id}, {$push: {"reviews": {rating: req.body.rating, comment: req.body.comment, postedBy: pendingUser}}},
+            (err, recipe) => {
+
+                res.json(recipe);
+            }
+
+            }
+
+        User.findAndUpdate({username: pendingUser}, {})
+
+
+        }
+
 
 
 For deleting a review:

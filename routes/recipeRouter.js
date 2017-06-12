@@ -5,177 +5,317 @@ const jwt = require('jsonwebtoken');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const verification = require('../verification');
-const Comment = require('../models/recipe');
+const Review = require('../models/review');
+const mongodb = require('mongodb');
+const config = require('../config');
+const User = require('../models/user');
+const {MongoClient, ObjectID} = require('mongodb');
 
-// I temporarily removed verification.checkIfUserExists to see if all this database stuff works
 
+// I think I impproved this a lot I should test it to be sure
 
-router = express.Router();
+let router = express.Router();
 
 router.use(bodyParser.json());
 
+router.use(bodyParser.urlencoded({extended: false}));
+
+
+// get all the recipes in the database
+
+// it works YAY!!
+
 router.get('/', (req, res) => {
-  res.json('Here are the recipes!')
-});
 
-// Is working
+    Recipe.find({}, (err, recipes) => {
 
-/*
- router.get('/showrecipes', (req, res) => {
- Recipe.find({}, (err, recipes) => {
- if (err) throw err;
- res.json(recipes);
- }).});
-
-
- */
-
-// I'm hoping this works
-
-router.get('/showrecipes', (req, res) => {
-  Recipe.find({}).populate('Comment').exec((err, recipes) => {
-      if (err) throw err;
-      res.json(recipes);
-  })
-});
-
-// Is working.
-
-router.get("/showrecipes/:recipeId", (req, res) => {
-    let nameQuery = {_id: req.params.recipeId};
-
-    Recipe.findOne(nameQuery, (err, recipes) => {
-        if (err) throw err;
-
-        res.json(recipes);
-    })
-        //// Don't know if this is correct
-      //  .populate('comment.recipeItem');
-});
-
-// I got it to work, the url should have been more specific
-
-router.get('/showrecipes/category/:categoryname', (req, res) => {
-
-    let nameQuery = {category: req.params.categoryname};
-
-    Recipe.find(nameQuery, (err, recipes) => {
-        if (err) throw err;
+        if (err) console.log(err);
 
         res.json(recipes);
     });
 });
 
-/*
+// Add Recipe, It works YAY!!!
 
- module.exports.getRecipesByCategory = (category, callback) => {
- Recipe.find({'category': category});
- };
-
- use this to test it
-
- {
- "name": "animal",
- "description": "delicious",
- "steps": "kill animal then eat it",
- "ingredients": ["animal", "killing weapon"],
- "category": "breakfast"
-
- }
+router.post('/addrecipe', (req, res) => {
 
 
+    Recipe.create({
+        name: req.body.name,
+        description: req.body.description,
+        steps: req.body.steps,
+        ingredients: req.body.ingredients,
+        category: req.body.category,
+        postedBy: req.body.postedBy
+    }).then((e, recipe) => {
+        if (e) console.log(e);
 
- */
+        res.json(recipe);
 
-// Now it's working, good stuff.
+        }
+    );
 
-
-//// the following three routes can only be done by registered users
-
-router.post('/addrecipe', (req, res, next) => {
-
-  Recipe.create({
-      name: req.body.name,
-      description: req.body.description,
-      steps: req.body.steps,
-      ingredients: req.body.ingredients,
-      category: req.body.category
-  }, (err, recipes) => {
-    if (err) throw err;
-
-
-    res.json(recipes);
-  });
 });
 
-// See if this works
+// Get the recipes posted by a particular user
 
-router.put("/showrecipes/:recipeId", (req, res) => {
+// it works yay, test it one more time with more than one user tho
 
-        let query = {_id: req.params.recipeId};
+router.get('/:postedBy', (req, res) => {
 
-
-    Recipe.findByIdAndUpdate(query, {
-        $set: req.body
-    }, {
-        new: true
-    }, (err, recipe) => {
-        if (err) throw err;
-        res.json(recipe)
-    })
-});
-
-// It's working, thank god
-
-    router.delete("/showrecipes/:recipeId", (req, res) => {
-
-        let query = {_id: req.params.recipeId};
-
-        Recipe.findByIdAndRemove(query, (err, recipe) => {
-            if (err) throw err;
-
-            res.send('Recipe was succesfully deleted');
-        })
-
-    });
-
-    router.get("/showrecipes/:recipeId", (req, res) => {
-        let nameQuery = {_id: req.params.recipeId};
-
-        Recipe.findOne(nameQuery, (err, recipes) => {
-            if (err) throw err;
-
-            res.json(recipes);
-        })
-
-    });
-
-    router.post("/showrecipes:/:recipeId/addcomment", (req, res, next) => {
-
-        Comment.create({
-            rating: req.body.rating,
-            comment: req.body.comment,
-            postedBy: postedBy,
-            date: Date.now(),
-            recipeItem: recipeId
-        })
-
-
-    });
-
-// test this
-
-router.get('/showrecipes/byuser/:username', (req, res) => {
-
-    let query = {postedBy: req.params.username};
+    let query = {postedBy: req.params.postedBy};
 
     Recipe.find(query, (err, recipes) => {
-        if (err) throw err;
+        if (err) console.log(err);
+
         res.json(recipes)
+    })
+});
+
+/// Get a recipe by it's _id
+
+// It works yay!!
+
+router.get('/handleRecipes/:recipeId', (req, res) => {
+
+    let query = {_id: req.params.recipeId};
+
+    Recipe.find(query, (err, recipe) => {
+        if (err) console.log(err);
+
+        res.json(recipe);
     })
 
 });
 
+// delete a recipe by it's _id
+
+// it worked it deleted it
+
+
+router.delete("/handleRecipes/:recipeId", (req, res) => {
+
+    let query = {_id: req.params.recipeId};
+
+    Recipe.findByIdAndRemove(query, (err) => {
+        if (err) console.log(err);
+    });
+
+    Review.find({reviewOf: req.params.recipeId}).remove();
+
+    Review.save().then((doc) => {
+            res.send(doc)
+        }, (e) => {
+            res.status(400).send(e);
+        }
+    );
+
+});
+
+// edit the recipe with the _id attached to it
+
+router.put('/handleRecipes/:recipeId', (req, res) => {
+
+    let query = {_id: req.params.recipeId};
+
+    Recipe.update(query, {
+            $set: {
+                name: req.body.name,
+                description: req.body.description,
+                steps: req.body.steps,
+                ingredients: req.body.ingredients,
+                category: req.body.category
+            }
+        },
+        {returnOriginal: false}, (err, recipe) => {
+
+            if (err) console.log(err);
+
+            res.json(recipe);
+        });
+
+    Recipe.save().then((doc) => {
+            res.send(doc)
+        }, (e) => {
+            res.status(400).send(e);
+        }
+    );
+
+
+});
+
+// add a review to the dish with the _id of the user and the _id of the recipe he is reviewing.
+
+
+router.post('/:userid/:recipeId/addreview', (req, res) => {
+
+    let alreadyReviewed = false;
+
+    Review.find({postedBy: req.params.userid, reviewOf: req.params.recipeId}, (err, review) => {
+        if (err) console.log(err);
+
+        if (review) {
+            alreadyReviewed = true;
+        }
+
+    });
+
+    if (!alreadyReviewed) {
+
+        let overallRating = (req.body.howGoodTaste + req.body.wouldMakeAgain + req.body.howEasyToMake)  / 3;
+
+        Review.create({
+            howEasyToMake: req.body.howEasyToMake,
+            wouldMakeAgain: req.body.wouldMakeAgain,
+            howGoodTaste: req.body.howGoodTaste,
+            rating: overallRating,
+            postedBy: req.params.userid,
+            reviewOf: req.params.recipeId,
+        });
+
+
+
+        Review.save().then((doc) => {
+                res.send(doc)
+            }, (e) => {
+                res.status(400).send(e);
+            }
+        );
+
+    }
+
+});
+
+/// edit the review score
+
+
+router.put('/:userid/:recipeId/editScore', (req, res) => {
+
+    let alreadyGaveScore = false;
+
+    Review.find({postedBy: req.params.userid, reviewOf: req.params.recipeId}, (err, review) => {
+        if (err) console.log(err);
+
+        if (review) {
+            alreadyGaveScore = true;
+        }
+
+    });
+
+    if (alreadyGaveScore){
+
+        let overallRating = (req.body.howGoodTaste + req.body.wouldMakeAgain + req.body.howEasyToMake)  / 3;
+
+        Review.update({postedBy: req.params.postedBy, reviewOf: req.params.recipeId},
+            {$set: {
+                howEasyToMake: req.body.howEasyToMake,
+                wouldMakeAgain: req.body.wouldMakeAgain,
+                howGoodTaste: req.body.howGoodTaste,
+                rating: overallRating
+            }});
+
+        Review.save().then(
+
+            (doc) => {
+                res.send(doc);
+            },
+
+            (e) => {
+                res.status(400).send(e);
+            }
+        );
+
+    }
+
+
+});
+
+/// add a commentary for your recipe review, and I think you could also use this for editing a comment as well
+
+router.put('/:userid/:recipeId/addComment', (req, res) => {
+
+    let alreadyGaveScore = false;
+
+    Review.find({postedBy: req.params.userid, reviewOf: req.params.recipeId}, (err, review) => {
+        if (err) console.log(err);
+
+        if (review) {
+            alreadyGaveScore = true;
+        }
+
+    });
+
+    if (alreadyGaveScore){
+
+        Review.update({postedBy: req.params.postedBy, reviewOf: req.params.recipeId},
+            {$set: {
+                comment: req.body.comment
+            }});
+
+        Review.save().then(
+
+            (doc) => {
+                res.send(doc);
+            },
+
+            (e) => {
+                res.status(400).send(e);
+            }
+        );
+    }
+
+});
+
+
+
+
+/// show the reviews belonging to a certain user
+
+router.get('/:userid/showUsersReviews', (req, res) => {
+
+    let query = {postedBy: req.params.userid};
+
+    Review.find(query, (err, reviews) => {
+        if (err) console.log(err);
+
+        res.json(reviews);
+
+    })
+
+});
+
+/// show the reviews of a particular recipe
+
+router.get('/:recipeId/showReviewsForRecipe', (req, res) => {
+
+    let query = {reviewOf: req.params.recipeId};
+
+
+    Review.find(query, (err, reviews) => {
+        if (err) console.log(err);
+
+        res.json(reviews);
+    });
+
+
+});
+
+
+/// delete a review based on the _id of the user who psoted it and the recipe being reviewed
+
+router.delete('/:userid/:recipeId/deleteReview', (req, res) => {
+
+    Review.findOneAndRemove({postedBy: req.params.userid, reviewOf: req.params.recipeId});
+
+    Review.save().then(
+        (doc) => {
+            res.send(doc);
+
+        },
+        (e) => {
+            res.satus(400).send(e);
+        });
+});
 
 
 module.exports = router;

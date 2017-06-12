@@ -1,0 +1,145 @@
+const express = require('express');
+const passport = require('passport');
+const Recipe = require('../models/recipe');
+const jwt = require('jsonwebtoken');
+const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
+const verification = require('../verification');
+const Review = require('../models/review');
+const mongodb = require('mongodb');
+const config = require('../config');
+const User = require('../models/user');
+const {MongoClient, ObjectID} = require('mongodb');
+
+
+/// replace the throw errs with just console.logs,, replace it with catch() that is in example code
+
+/// Your approach isn't working, just stick to using the populate mongoose stuff
+
+let router = express.Router();
+
+router.use(bodyParser.json());
+
+router.use(bodyParser.urlencoded({ extended: false }));
+
+router.get('/', (req, res, next) => {
+
+    Recipe.find({}, (err, recipes) => {
+
+        if (err) throw err;
+
+        res.json(recipes);
+    });
+});
+
+router.post('/addrecipe', (req, res, next) => {
+
+
+    /// this approach is slow, shitty, and unproffesional. Use the mongoose ref schema stuff
+    /// It doesn't even fucking work
+
+    Recipe.create({
+        name: req.body.name,
+        description: req.body.description,
+        steps: req.body.steps,
+        ingredients: req.body.ingredients,
+        category: req.body.category,
+        postedBy: req.body.postedBy
+    }).then(User.update({_id: req.body.postedBy}, {
+        $push: {
+            usersRecipes: {
+                name: req.body.name,
+                description: req.body.description,
+                steps: req.body.steps,
+                ingredients: req.body.ingredients,
+                category: req.body.category,
+                //" userId: req.body.userId
+            }
+        }
+    }));
+
+    /*
+
+        User.update({_id: req.body.postedBy}, {
+                $push: {
+                    usersRecipes: {
+                        name: req.body.name,
+                        description: req.body.description,
+                        steps: req.body.steps,
+                        ingredients: req.body.ingredients,
+                        category: req.body.category,
+                       //" userId: req.body.userId
+                    }
+                }
+            })
+
+            */
+});
+
+router.delete("/handleRecipes/:recipeId", (req, res) => {
+
+    let query = {_id: req.params.recipeId};
+
+    let recipeName = req.body.name;
+
+    let userWhoMadeRecipe = Recipe.find({}, (err, recipe) => {
+        return recipe.postedBy;
+    });
+
+    Recipe.findByIdAndRemove(query, (err, recipe) => {
+        if (err) throw err;
+
+        res.json(recipe)
+    });
+
+    User.update({username: userWhoMadeRecipe}, {$pull: {'usersRecipes': {name: recipeName}}},
+        {
+            returnOriginal: false
+        }).then(
+        (err, user) => {
+
+            res.json(user)
+        }
+    );
+
+
+
+
+
+
+
+    /*
+
+    let recipeName = req.body.name;
+
+
+
+
+
+
+
+    /// I need to get all the people who have reviewed and liked this recipe and remove the recipe from their
+    //// liked recipes and userreviewed recipes.
+
+    /// for now I'll do this, and maybe change it if there is performance issues.
+
+    db.collection('users').update({}, {
+            $pull: {usersLikedRecipes: {name: recipeName}}
+        },
+        {multi: true});
+
+
+    db.collection('recipes').findOneAndDelete(query, (err, recipe) => {
+        if (err) throw err;
+
+        res.json(recipe._id + 'was successfully deleteted!')
+    });
+
+
+    */
+
+});
+
+
+
+module.exports = router;

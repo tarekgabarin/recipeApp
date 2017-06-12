@@ -1,0 +1,280 @@
+const express = require('express');
+const passport = require('passport');
+const Recipe = require('../models/recipe');
+const jwt = require('jsonwebtoken');
+const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
+const verification = require('../verification');
+const Review = require('../models/review');
+const mongodb = require('mongodb');
+const config = require('../config');
+const User = require('../models/user');
+const {MongoClient, ObjectID} = require('mongodb');
+
+let router = express.Router();
+
+router.use(bodyParser.json());
+
+router.use(bodyParser.urlencoded({ extended: false }));
+
+let db = mongoose.connect(config.mongoUrl);
+
+router.get('/', (req, res, next) => {
+
+    db.collection('recipes').find({}, (err, recipes) => {
+
+
+
+        if (err) throw err;
+
+        // res.json(recipes)
+    });
+});
+
+router.post('/addrecipe', (req, res, next) => {
+
+    db.collection('recipes').insertOne({
+        name: req.body.name,
+        description: req.body.description,
+        steps: req.body.steps,
+        ingredients: req.body.ingredients,
+        category: req.body.category,
+        postedBy: req.body.username
+    }, (err, recipe) => {
+
+        if (err) throw err;
+
+        res.json(recipe);
+
+        /// I wonder if you could just do $push:
+
+        db.collection('users').update({userId: req.body.userId}, {
+                $push: {
+                    'usersRecipes': {
+                        name: req.body.name,
+                        description: req.body.description,
+                        steps: req.body.steps,
+                        ingredients: req.body.ingredients,
+                        category: req.body.category,
+                        userId: req.body.userId
+                    }
+                }
+            },
+
+            {
+
+                returnOriginal: false
+
+            },
+            (err, user) => {
+
+                res.json(user);
+            })
+    });
+});
+
+router.get('category/:categoryname', (req, res) => {
+
+    let nameQuery = {category: req.params.categoryname};
+
+    db.collection('recipes').find(nameQuery, (err, recipes) => {
+        if (err) throw err;
+        res.json(recipes);
+    });
+});
+
+router.get("/handleRecipes/:recipeId", (req, res) => {
+    let nameQuery = {_id: req.params.recipeId};
+    db.collection('recipes').findOne(nameQuery, (err, recipes) => {
+        if (err) throw err;
+        res.json(recipes);
+    })
+});
+
+router.put("/handleRecipes/:recipeId", (req, res) => {
+
+    let query = {_id: req.params.recipeId};
+
+    let userid = req.body.postedBy;
+
+    let recipeName = req.body.name;
+
+    db.collection('recipes').findOneAndUpdate(query,
+        {
+            $set: {
+                name: req.body.name,
+                description: req.body.description,
+                steps: req.body.steps,
+                ingredients: req.body.ingredients,
+                category: req.body.category,
+            }
+        },
+        {
+            returnOriginal: false
+        }).then((err, recipe) => {
+        if (err) throw err;
+        res.json(recipe)
+    });
+
+
+    db.collection('users').update({userId: userid, "usersRecipes.name": recipeName},
+        {
+            $set: {
+                name: req.body.name,
+                description: req.body.description,
+                steps: req.body.steps,
+                ingredients: req.body.ingredients,
+                category: req.body.category,
+            }
+        },
+        {
+            returnOriginal: false
+        },
+        (err, user) => {
+
+            if (err) throw err;
+
+            res.json(user)
+
+        })
+
+});
+
+router.delete("/handleRecipes/:recipeId", (req, res) => {
+
+    let recipeName = req.body.name;
+
+    let query = {_id: req.params.recipeId};
+
+    let userWhoMadeRecipe = db.collection('recipes').find({}, (err, recipe) => {
+        return recipe.postedBy;
+    });
+
+    db.collection('users').update({username: userWhoMadeRecipe}, {$pull: {usersRecipes: {name: recipeName}}},
+        {
+            returnOriginal: false
+        }).then(
+        (err, user) => {
+
+            res.json(user)
+        }
+    );
+
+
+    /// I need to get all the people who have reviewed and liked this recipe and remove the recipe from their
+    //// liked recipes and userreviewed recipes.
+
+    /// for now I'll do this, and maybe change it if there is performance issues.
+
+    db.collection('users').update({}, {
+            $pull: {usersLikedRecipes: {name: recipeName}}
+        },
+        {multi: true});
+
+
+    db.collection('recipes').findOneAndDelete(query, (err, recipe) => {
+        if (err) throw err;
+
+        res.json(recipe._id + 'was successfully deleteted!')
+    });
+
+});
+
+
+router.post('/:recipeId/addReview', (req, res) => {
+
+    let userid = req.body.userId;
+
+    let query = {_id: req.params.recipeId};
+
+    db.collection('reviews').insertOne({
+        howEasyToMake: req.body.howEasyToMake,
+        wouldMakeAgain: req.body.wouldMakeAgain,
+        howGoodTaste: req.body.howGoodTaste,
+        recipeItem: req.body.recipeItem,
+        postedBy: userid,
+        rating: (req.body.howGoodTaste + req.body.wouldMakeAgain + req.body.howGoodTaste) / 3
+    }, (err, review) => {
+
+
+        db.collection('recipes').update(query, {$push: {'reviewsArray': {review}}},
+            {returnOriginal: false},
+
+            (err, recipe) => {
+
+                if (err) throw err;
+
+                res.json(recipe)
+            }).then(
+            db.collection('recipes').update(query, {
+                $inc: {numberOfRatings: 1, totalAddedRatings: review.rating},
+                $set: {
+
+                    reviewAverage: recipe.totalAddedRatings / recipe.numberOfRatings
+
+                }
+            }));
+
+
+        db.collection('users').update({userId: userid}, {$push: {'usersReviews': {review}}},
+            (err, user) => {
+
+                if (err) throw err;
+
+                res.json(user)
+
+            });
+
+        if (review.rating > 3) {
+
+            let userWhoMadeRecipe = db.collection('recipe').find(query, (err, recipe) => {
+                return recipe.postedBy;
+            });
+
+            db.collection('users').update({username: userWhoMadeRecipe}, {
+                $inc: {
+                    chefKarma: 1
+                }
+            });
+
+            db.collection('recipe').find(query, (err, recipe) => {
+                db.collection('users').update({userId: userid}, {$push: {'usersLikedRecipes': {recipe}}});
+            });
+
+        }
+    })
+});
+
+
+router.put('/:recipeId/addComment', (req, res) => {
+
+    db.collection('recipes').update({_id: req.params.recipeId, 'reviewsArray.postedBy': req.body.userId},
+
+        {
+            $set: {
+                comment: req.body.comment
+            }
+        },
+        {
+            returnOriginal: false
+
+        },
+        (err, recipe) => {
+            if (err) throw err;
+
+            res.json(recipe);
+        });
+
+    db.collection('users').update({userId: req.body.userId, 'usersReviews.recipeItem': req.params.recipeId}, {
+
+        $set: {
+            comment: req.body.comment
+        }
+    });
+
+});
+
+/// You should inlcude a show Recipes by username id thing
+
+module.exports = router;
+

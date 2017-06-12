@@ -1,0 +1,169 @@
+const express = require('express');
+const passport = require('passport');
+const User = require('../models/user');
+const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
+const uuidV4 = require('uuid/v4');
+// const verification = require('verification');
+
+let router = express.Router();
+
+
+const {MongoClient, ObjectID} = require('mongodb');
+
+MongoClient.connect('mongodb://localhost:27017/TodoApp', (err, db) => {
+  if (err) {
+    return console.log('Unable to connect to MongoDB server');
+  }
+  console.log('Connected to MongoDB server');
+
+  router.get('/', (req, res, next) => {
+
+      db.collection('users').find({}, (err, users) => {
+          if (err) throw err;
+          res.json(users);
+      })
+    });
+
+
+
+
+  router.post('/register', function(req, res, next){
+
+
+      db.collection('users').insertOne({
+        username: req.body.username,
+        password: req.body.password,
+        name: req.body.name,
+        email: req.body.email,
+        profilePic: req.body.profilePic
+      }, (err, user) => {
+          if (err) throw err;
+
+          bcrypt.genSalt(10, function(err, salt){
+              bcrypt.hash(user.password, salt, function(err, hash){
+                  if (err) throw err;
+                  user.password = hash;
+                  user.save();
+              })
+          });
+
+          user.userId = uuidV4();
+        })
+
+
+        });
+
+  // for updating email and password, I'll have to write newer more complex stuff
+  // for now these will do for minor stuff someone would like to edit
+
+  router.put('/:userid/updateUserInfo', (req, res, next) => {
+
+    let query = {userId: req.params.userid};
+
+    db.collection('users').findOneAndUpdate(query,
+      {$set: {
+        profilePic: req.body.profilePic,
+        name: req.body.name,
+      }},
+    {
+      returnOriginal: false
+    }).then(
+      (recipe) =>
+      res.json(recipe)
+    );
+  });
+
+  router.delete('/:userid/deleteUser', (req, res, next) => {
+
+    let query = {userId: req.params.userid};
+
+    db.collection("users").findOneAndDelete(query, (err, user) => {
+        if (err) throw err;
+
+        //// delete all the users' recipes and reviews
+
+
+        db.collection('recipes').deleteMany({postedBy: req.params.userId});
+
+
+        db.collection('recipes').update({}, {$pull: {'reviewsArray': {'postebBy': userId}}});
+
+
+        res.send('The user ' + user + 'was succesfully deleted!');
+    });
+
+
+
+  });
+
+
+
+
+  db.close();
+});
+
+
+
+
+
+
+
+
+
+
+
+
+// Works, keep it.
+
+
+
+
+// Works, keep it.
+
+
+/*
+
+/// Redo this, doesn't work
+
+router.post('/login', (req, res, next) => {
+    passport.authenticate('local', (err, user, info) => {
+        if(err) return next(err);
+
+        if(!user){
+            return res.json(403, {
+                message: info
+            })
+        }
+    });
+
+    req.logIn(user, (err) => {
+        if (err) return next(err);
+
+        return res.json({
+            message: 'user authenticated!'
+        });
+    });
+
+    // let token = verification.getToken(user);
+
+    res.status(200).json({
+        status: 'Login successful!',
+        success: true,
+        token: token
+    });
+
+});
+
+router.get('/logout', (req, res) => {
+    req.logout();
+    res.status(200).json({
+        status: 'logging'
+    })
+});
+
+*/
+
+
+module.exports = router;

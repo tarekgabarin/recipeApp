@@ -3,60 +3,95 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const passportLocalMongoose = require('passport-local-mongoose');
 const passport = require('passport');
+const validator = require('validator');
+const uuidV4 = require('uuid/v4');
+const {reviewSchema} = require('../models/review');
 
 let Schema = mongoose.Schema;
 
 
 let User = Schema({
 
-  name: {
-    type: String
-  },
+    name: {
+        type: String
+    },
 
-  // The passport plugin already inputs username and password into our Schema
+    // The passport plugin already inputs username and password into our Schema
 
-  username: {
-    type: String,
-    unique: true,
-    required: true
-  },
+    username: {
+        type: String,
+        unique: true,
+        required: true
+    },
 
-   password: {
-   type: String,
-   required: true,
-   },
+    password: {
+        type: String,
+        required: true,
+        minlength: 6
+    },
 
+    userId: {
+        type: String,
+        default: "Empty"
+    },
 
+    tokens: [{
 
-  profilePic: {
-    type: String
-  },
+        access: {
+            type: String,
+            required: true
+        },
 
-  email: {
-    type: String,
-    unique: true,
-    required: true
-  },
+        token: {
+            type: String,
+            required: true
+        }
 
+    }],
 
+    profilePic: {
+        type: String
+    },
 
-  admin: {
-    type: Boolean,
-      defualt: false
-  },
+    email: {
+        type: String,
+        unique: true,
+        required: true,
+        validate: {
+            validator: (value) => {
+                return validator.isEmail(value);
+            },
 
-  usersRecipes: [{type: Schema.Types.ObjectId, ref:'Recipe'}],
+            message: `{value} is not a valid email address.`
+        }
+    },
 
-  userComments: [{type: Schema.Types.ObjectId, ref: 'Comment'}],
+    admin: {
+        type: Boolean,
+        defualt: false
+    },
 
-  usersFavouriteRecipes: [{type: Schema.Types.ObjectId, ref: 'Recipe'}],
+    usersRecipes: [],
 
-  usersLikedRecipes: [{type: Schema.Types.ObjectId, ref: 'Recipe'}]
+    //usersRecipes: [{type: Schema.Types.ObjectId, ref: 'Recipe'}],
 
+    usersReviews: [{type: Schema.Types.ObjectId, ref: 'Review'}],
+
+    usersFavouriteRecipes: {
+        type: Array
+    },
+
+    usersLikedRecipes: {
+        type: Array
+    },
+
+    chefKarma: {
+        type: Number,
+        defualt: 0
+    }
 
 
 });
-
 
 
 let options = ({missingPasswordError: "Incorrect password, try again"});

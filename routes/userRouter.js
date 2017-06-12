@@ -1,119 +1,148 @@
 const express = require('express');
 const passport = require('passport');
-const User = require('../models/user');
+const Recipe = require('../models/recipe');
 const jwt = require('jsonwebtoken');
+const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
-// const verification = require('verification');
+const verification = require('../verification');
+const Review = require('../models/review');
+const mongodb = require('mongodb');
+const config = require('../config');
+const User = require('../models/user');
+const {MongoClient, ObjectID} = require('mongodb');
+const uuidV4 = require('uuid/v4');
+const bcrypt = require("bcrypt");
 
 let router = express.Router();
 
+router.use(bodyParser.json());
+
+
+/// Works
+
 router.get('/', (req, res, next) => {
+
     User.find({}, (err, users) => {
         if (err) throw err;
         res.json(users);
     })
-});
+  });
 
-router.get('/:username', (req, res, next) => {
-    let nameQuery = {username: req.params.username};
-
-    User.findOne(nameQuery, (err, users) =>{
-        if (err) throw err;
-        res.json(users);
-
-    })
-});
+/// create a user and hash his password
 
 router.post('/register', function(req, res, next){
+
+    let userid = uuidV4();
 
     User.create({
         username: req.body.username,
         password: req.body.password,
         name: req.body.name,
         email: req.body.email,
-        profilePic: req.body.profilePic
+        profilePic: req.body.profilePic,
+        userId: userid
     }, (err, user) => {
-        if (err) throw err;
+            if (err) throw err;
 
-        // if you get an error just remove it
+            bcrypt.genSalt(10, function(err, salt){
+                bcrypt.hash(user.password, salt, function(err, hash){
+                    if (err) throw err;
+                    user.password = hash;
+                })
+            });
 
-        bcrypt.genSalt(10, function(err, salt){
-            bcrypt.hash(user.password, salt, function(err, hash){
-                if (err) throw err;
-                user.password = hash;
-                user.save();
-            })
+
         });
 
+    User.save().then(
+        (doc) => {
+            res.send(doc);
+        },
 
-        res.json(user);
-    });
-
-});
-
-/// test this out
-
-router.post('/login', (req, res, next) => {
-    passport.authenticate('local', (err, user, info) => {
-        if(err) return next(err);
-
-        if(!user){
-            return res.json(403, {
-                message: info
-            })
+        (e) => {
+            res.status(400).send(e);
         }
-    });
+    )
 
-    req.logIn(user, (err) => {
-        if (err) return next(err);
+});
 
-        return res.json({
-            message: 'user authenticated!'
+/// update the users info
+
+router.put('/:userid/updateUserInfo', (req, res, next) => {
+
+    let query = {userId: req.params.userid};
+
+    User.findOneAndUpdate(query,
+        {$set: {
+            profilePic: req.body.profilePic,
+            name: req.body.name,
+        }},
+        {
+            returnOriginal: false
         });
-    });
 
-    // let token = verification.getToken(user);
+    User.save().then(
 
-    res.status(200).json({
-        status: 'Login successful!',
-        success: true,
-        token: token
-    });
+        (doc) => {
+
+            res.send(doc);
+
+        },
+        (e) => {
+            res.status(400).send(e);
+        });
 
 });
 
-router.get('/logout', (req, res) => {
-    req.logout();
-    res.status(200).json({
-        status: 'logging'
-    })
-});
+/// delete a user and all of his recipes and reviews based on his _id
+
+router.delete('/:userid/deleteUser', (req, res) => {
+
+    let query = {_id: req.params.userid};
+
+    User.findOneAndRemove(query, (err, user) => {
+        if (err) console.log(err);
+
+        User.save().then((doc) => {
+            res.send(doc)
+        },
+            (e) => {
+            res.status(400).send(e);
+            }
+        );
+
+
+      Recipe.find({postedBy: req.params.userid}).remove();
+
+      Recipe.save().then(
+          (doc) => {
+              res.send(doc);
+          },
+
+          (e) => {
+              res.status(400).send(e);
+          }
+      );
+
+      Review.find({postedBy: req.params.userid}).remove();
+
+        Review.save().then(
+            (doc) => {
+                res.send(doc);
+            },
+
+            (e) => {
+                res.status(400).send(e);
+            }
+        );
 
 
 
-
-
-
-/*
-
- module.exports.getUserById = (id, callback) => {
- User.findOne(id, callback);
- };
-
- */
-
-
-
-router.delete('/deleteuser/:username', (req, res) => {
-
-    let nameQuery = {username: req.params.username};
-
-    User.findOneAndRemove(nameQuery, (err, user) => {
-        if (err) throw err;
 
         res.send('The user ' + user + 'was succesfully deleted!');
     });
+
+
 
 });
 

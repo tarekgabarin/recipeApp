@@ -1,44 +1,11 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const User = require('../models/user');
+require('mongoose-currency').loadType(mongoose);
+const Currency = mongoose.Types.Currency;
+
 
 let Schema = mongoose.Schema;
-
-let commentSchema = Schema({
-
-  rating: {
-    type: Number,
-    // required: true,
-    min: 1,
-    max: 5,
-  },
-
-  recipeItem: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Recipe'
-  },
-
-  comment: {
-    type: String,
-     // required: true
-  },
-
-  postedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  },
-
-  likedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  },
-
- favouredBy: {
-    type: mongoose.Schema.Types.ObjectId
- }
-});
-
-let Comment = mongoose.model('Comment', commentSchema);
 
 let recipeSchema = Schema({
 
@@ -56,12 +23,7 @@ let recipeSchema = Schema({
     required: true,
   },
 
-  ingredients: {
-    type: Array,
-    required: true
-  },
-
-  comments: [commentSchema],
+  ingredients: [],
 
   category: {
     type: String,
@@ -69,11 +31,36 @@ let recipeSchema = Schema({
   },
 
   postedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  }
+    type: String,
+    required: true
+  },
+
+  /// Line below may not work
+
+  /// postedBy: {type: Schema.Types.ObjectId, ref: 'User'},
+
+  numberOfRatings: {
+    type: Number,
+    default: 0
+  },
+
+  totalAddedRatings: {
+      type: Number,
+      default: 0
+  },
+
+  reviewAverage: {
+      type: Number,
+      default: undefined
+  },
+
+  /// Maybe have the function that calculates the mean score here? Need to be check if mongoose is okay with functions in
+    // in a Schema
+
+  //// add the total added ratings, number of ratings, and the function
 
 });
+
 
 /// So I learnt that by defining the string as "Recipe" in the model function, I will have to lower case it
 /// and pluralize it when I use it with res.json and other such things (i.e. "Recipe" => recipes).
@@ -81,7 +68,8 @@ let recipeSchema = Schema({
 let Recipe = mongoose.model('Recipe', recipeSchema);
 
 module.exports = Recipe;
-module.exports = Comment;
+
+
 
 /// refactor this so that these are in the router, not in the models file
 
