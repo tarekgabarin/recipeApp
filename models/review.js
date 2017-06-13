@@ -50,18 +50,20 @@ let reviewSchema = Schema({
 
     comment: {
         type: String,
-        defualt: ""
+        default: ""
     },
 
 
     postedBy: {
         type: String,
-        required: true
+        required: true,
+        index: true
     },
 
     reviewOf: {
         type: String,
-        required: true
+        required: true,
+        index: true
     }
 
 });

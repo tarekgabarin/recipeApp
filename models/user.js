@@ -50,7 +50,7 @@ let User = Schema({
     }],
 
     profilePic: {
-        type: String
+        type: String,
     },
 
     email: {
@@ -75,7 +75,7 @@ let User = Schema({
 
     //usersRecipes: [{type: Schema.Types.ObjectId, ref: 'Recipe'}],
 
-    usersReviews: [{type: Schema.Types.ObjectId, ref: 'Review'}],
+   /// usersReviews: [{type: Schema.Types.ObjectId, ref: 'Review'}],
 
     usersFavouriteRecipes: {
         type: Array
@@ -87,7 +87,7 @@ let User = Schema({
 
     chefKarma: {
         type: Number,
-        defualt: 0
+        default: 0
     }
 
 

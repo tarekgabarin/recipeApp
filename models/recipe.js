@@ -32,7 +32,8 @@ let recipeSchema = Schema({
 
   postedBy: {
     type: String,
-    required: true
+    required: true,
+    index: true
   },
 
   /// Line below may not work
@@ -52,7 +53,7 @@ let recipeSchema = Schema({
   reviewAverage: {
       type: Number,
       default: undefined
-  },
+  }
 
   /// Maybe have the function that calculates the mean score here? Need to be check if mongoose is okay with functions in
     // in a Schema

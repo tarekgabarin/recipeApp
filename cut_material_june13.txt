@@ -1,0 +1,128 @@
+    /*
+
+    Review.find({postedBy: req.params.userid, reviewOf: req.params.recipeId}, (err, review) => {
+        if (err) console.log(err);
+
+        if (review) {
+            alreadyReviewed = true;
+        }
+
+    }).lean();
+
+    if (!alreadyReviewed) {
+
+        let overallRating = (req.body.howGoodTaste + req.body.wouldMakeAgain + req.body.howEasyToMake)  / 3;
+
+        Review.create({
+            howEasyToMake: req.body.howEasyToMake,
+            wouldMakeAgain: req.body.wouldMakeAgain,
+            howGoodTaste: req.body.howGoodTaste,
+            rating: overallRating,
+            postedBy: req.params.userid,
+            reviewOf: req.params.recipeId,
+        }).then((doc) => {
+                res.send(doc)
+            }, (e) => {
+                res.status(400).send(e);
+            }
+        );
+
+    }
+
+    */
+
+    /// edit the review score
+
+
+    router.put('/:userid/:recipeId/editScore', (req, res) => {
+
+        let alreadyGaveScore = false;
+
+        Review.find({postedBy: req.params.userid, reviewOf: req.params.recipeId}, (err, review) => {
+            if (err) console.log(err);
+
+            if (review) {
+                alreadyGaveScore = true;
+            }
+
+        }).lean();
+
+        if (alreadyGaveScore){
+
+            let overallRating = (req.body.howGoodTaste + req.body.wouldMakeAgain + req.body.howEasyToMake)  / 3;
+
+            Review.update({postedBy: req.params.postedBy, reviewOf: req.params.recipeId},
+                {$set: {
+                    howEasyToMake: req.body.howEasyToMake,
+                    wouldMakeAgain: req.body.wouldMakeAgain,
+                    howGoodTaste: req.body.howGoodTaste,
+                    rating: overallRating
+                }});
+
+            Review.save().then(
+
+                (doc) => {
+                    res.send(doc);
+                },
+
+                (e) => {
+                    res.status(400).send(e);
+                }
+            );
+
+        }
+
+
+    });
+
+    /// add a commentary for your recipe review, and I think you could also use this for editing a comment as well
+
+    router.put('/:userid/:recipeId/addComment', (req, res) => {
+
+        let alreadyGaveScore = false;
+
+        Review.find({postedBy: req.params.userid, reviewOf: req.params.recipeId}, (err, review) => {
+            if (err) console.log(err);
+
+            if (review) {
+                alreadyGaveScore = true;
+            }
+
+        });
+
+        if (alreadyGaveScore){
+
+            Review.update({postedBy: req.params.postedBy, reviewOf: req.params.recipeId},
+                {$set: {
+                    comment: req.body.comment
+                }});
+
+            Review.save().then(
+
+                (doc) => {
+                    res.send(doc);
+                },
+
+                (e) => {
+                    res.status(400).send(e);
+                }
+            );
+        }
+
+    });
+
+   /*
+
+    Review.findOneAndRemove({postedBy: req.params.userid, reviewOf: req.params.recipeId});
+
+    Review.save().then(
+        (doc) => {
+            res.send(doc);
+
+        },
+        (e) => {
+            res.satus(400).send(e);
+        });
+
+
+        */

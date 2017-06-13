@@ -80,17 +80,19 @@ router.get('/handleRecipes/:recipeId', (req, res) => {
 
     let query = {_id: req.params.recipeId};
 
+    //// Recipe.createIndex({_id: 1}); all the _id fields are indexed by default.
+
     Recipe.find(query, (err, recipe) => {
         if (err) console.log(err);
 
         res.json(recipe);
-    })
+    }).limit(1);
 
 });
 
 // delete a recipe by it's _id
 
-// it worked it deleted it
+//  Works like a charm
 
 
 router.delete("/handleRecipes/:recipeId", (req, res) => {
@@ -100,6 +102,8 @@ router.delete("/handleRecipes/:recipeId", (req, res) => {
     Recipe.findByIdAndRemove(query, (err) => {
         if (err) console.log(err);
     });
+
+    /// Review.deleteMany({reviewOf: req.params.recipeId});
 
     Review.find({reviewOf: req.params.recipeId}).remove();
 
@@ -147,129 +151,38 @@ router.put('/handleRecipes/:recipeId', (req, res) => {
 // add a review to the dish with the _id of the user and the _id of the recipe he is reviewing.
 
 
-router.post('/:userid/:recipeId/addreview', (req, res) => {
+// Works
 
-    let alreadyReviewed = false;
 
-    Review.find({postedBy: req.params.userid, reviewOf: req.params.recipeId}, (err, review) => {
-        if (err) console.log(err);
+router.put('/:userid/:recipeId/', (req, res) => {
 
-        if (review) {
-            alreadyReviewed = true;
+    // let alreadyReviewed = false;
+
+    let overallRating = (Number(req.body.howGoodTaste) + Number(req.body.wouldMakeAgain) + Number(req.body.howEasyToMake))  / 3;
+
+
+    Review.update({postedBy: req.params.userid, reviewOf: req.params.recipeId}, {$set: {
+        howEasyToMake: req.body.howEasyToMake,
+        wouldMakeAgain: req.body.wouldMakeAgain,
+        howGoodTaste: req.body.howGoodTaste,
+        rating: overallRating,
+        postedBy: req.params.userid,
+        reviewOf: req.params.recipeId,
+        comment: req.body.comment
+    }},{upsert: true, setDefaultsOnInsert: true}).then((doc) => {
+            res.send(doc)
+        }, (e) => {
+            res.status(400).send(e);
         }
-
-    });
-
-    if (!alreadyReviewed) {
-
-        let overallRating = (req.body.howGoodTaste + req.body.wouldMakeAgain + req.body.howEasyToMake)  / 3;
-
-        Review.create({
-            howEasyToMake: req.body.howEasyToMake,
-            wouldMakeAgain: req.body.wouldMakeAgain,
-            howGoodTaste: req.body.howGoodTaste,
-            rating: overallRating,
-            postedBy: req.params.userid,
-            reviewOf: req.params.recipeId,
-        });
-
-
-
-        Review.save().then((doc) => {
-                res.send(doc)
-            }, (e) => {
-                res.status(400).send(e);
-            }
-        );
-
-    }
+    );
 
 });
-
-/// edit the review score
-
-
-router.put('/:userid/:recipeId/editScore', (req, res) => {
-
-    let alreadyGaveScore = false;
-
-    Review.find({postedBy: req.params.userid, reviewOf: req.params.recipeId}, (err, review) => {
-        if (err) console.log(err);
-
-        if (review) {
-            alreadyGaveScore = true;
-        }
-
-    });
-
-    if (alreadyGaveScore){
-
-        let overallRating = (req.body.howGoodTaste + req.body.wouldMakeAgain + req.body.howEasyToMake)  / 3;
-
-        Review.update({postedBy: req.params.postedBy, reviewOf: req.params.recipeId},
-            {$set: {
-                howEasyToMake: req.body.howEasyToMake,
-                wouldMakeAgain: req.body.wouldMakeAgain,
-                howGoodTaste: req.body.howGoodTaste,
-                rating: overallRating
-            }});
-
-        Review.save().then(
-
-            (doc) => {
-                res.send(doc);
-            },
-
-            (e) => {
-                res.status(400).send(e);
-            }
-        );
-
-    }
-
-
-});
-
-/// add a commentary for your recipe review, and I think you could also use this for editing a comment as well
-
-router.put('/:userid/:recipeId/addComment', (req, res) => {
-
-    let alreadyGaveScore = false;
-
-    Review.find({postedBy: req.params.userid, reviewOf: req.params.recipeId}, (err, review) => {
-        if (err) console.log(err);
-
-        if (review) {
-            alreadyGaveScore = true;
-        }
-
-    });
-
-    if (alreadyGaveScore){
-
-        Review.update({postedBy: req.params.postedBy, reviewOf: req.params.recipeId},
-            {$set: {
-                comment: req.body.comment
-            }});
-
-        Review.save().then(
-
-            (doc) => {
-                res.send(doc);
-            },
-
-            (e) => {
-                res.status(400).send(e);
-            }
-        );
-    }
-
-});
-
 
 
 
 /// show the reviews belonging to a certain user
+
+// It's working
 
 router.get('/:userid/showUsersReviews', (req, res) => {
 
@@ -285,6 +198,8 @@ router.get('/:userid/showUsersReviews', (req, res) => {
 });
 
 /// show the reviews of a particular recipe
+
+// It's working
 
 router.get('/:recipeId/showReviewsForRecipe', (req, res) => {
 
@@ -303,18 +218,18 @@ router.get('/:recipeId/showReviewsForRecipe', (req, res) => {
 
 /// delete a review based on the _id of the user who psoted it and the recipe being reviewed
 
+// it works
+
 router.delete('/:userid/:recipeId/deleteReview', (req, res) => {
 
-    Review.findOneAndRemove({postedBy: req.params.userid, reviewOf: req.params.recipeId});
 
-    Review.save().then(
-        (doc) => {
-            res.send(doc);
+    Review.remove({postedBy: req.params.userid, reviewOf: req.params.recipeId}, (err, doc) => {
+        if (err) res.satus(400).send(err);
 
-        },
-        (e) => {
-            res.satus(400).send(e);
-        });
+        res.send(doc)
+
+    });
+
 });
 
 

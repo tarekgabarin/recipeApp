@@ -30,6 +30,9 @@ router.get('/', (req, res, next) => {
 
 /// create a user and hash his password
 
+/// It works, and it was quick too. The save() stuff is superflous becuase .create() already does that for us,
+// but good stuff overall
+
 router.post('/register', function(req, res, next){
 
     let userid = uuidV4();
@@ -54,6 +57,8 @@ router.post('/register', function(req, res, next){
 
         });
 
+    /*
+
     User.save().then(
         (doc) => {
             res.send(doc);
@@ -64,13 +69,36 @@ router.post('/register', function(req, res, next){
         }
     )
 
+    */
+
 });
 
 /// update the users info
 
+// Not working, redo
+
+// retest it
+
 router.put('/:userid/updateUserInfo', (req, res, next) => {
 
-    let query = {userId: req.params.userid};
+    let userid = req.params.userid;
+
+    let updatedFields = req.body;
+
+    User.findByIdAndUpdate(userid, updatedFields).lean(true).then(
+
+        (doc) => {
+
+            res.send(doc);
+
+        },
+        (e) => {
+            res.status(400).send(e);
+        });
+
+    /*
+
+    I learned today that
 
     User.findOneAndUpdate(query,
         {$set: {
@@ -91,6 +119,8 @@ router.put('/:userid/updateUserInfo', (req, res, next) => {
         (e) => {
             res.status(400).send(e);
         });
+
+        */
 
 });
 
