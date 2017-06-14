@@ -29,13 +29,17 @@ router.get('/', (req, res) => {
 
     Recipe.find({}, (err, recipes) => {
 
-        if (err) console.log(err);
+        if (err) res.send(err);
 
         res.json(recipes);
-    });
+    }).lean();
 });
 
-// Add Recipe, It works YAY!!!
+// Add Recipe
+
+// test success, don't test again
+
+
 
 router.post('/addrecipe', (req, res) => {
 
@@ -47,30 +51,15 @@ router.post('/addrecipe', (req, res) => {
         ingredients: req.body.ingredients,
         category: req.body.category,
         postedBy: req.body.postedBy
-    }).then((e, recipe) => {
-        if (e) console.log(e);
+    }, (err, recipe) => {
+        if (err) console.log(err);
 
         res.json(recipe);
 
-        }
-    );
-
+    });
 });
 
-// Get the recipes posted by a particular user
 
-// it works yay, test it one more time with more than one user tho
-
-router.get('/:postedBy', (req, res) => {
-
-    let query = {postedBy: req.params.postedBy};
-
-    Recipe.find(query, (err, recipes) => {
-        if (err) console.log(err);
-
-        res.json(recipes)
-    })
-});
 
 /// Get a recipe by it's _id
 
@@ -86,7 +75,7 @@ router.get('/handleRecipes/:recipeId', (req, res) => {
         if (err) console.log(err);
 
         res.json(recipe);
-    }).limit(1);
+    }).lean().limit(1);
 
 });
 
@@ -105,7 +94,7 @@ router.delete("/handleRecipes/:recipeId", (req, res) => {
 
     /// Review.deleteMany({reviewOf: req.params.recipeId});
 
-    Review.find({reviewOf: req.params.recipeId}).remove();
+    Review.find({reviewOf: req.params.recipeId}).lean().remove();
 
     Review.save().then((doc) => {
             res.send(doc)
@@ -117,6 +106,8 @@ router.delete("/handleRecipes/:recipeId", (req, res) => {
 });
 
 // edit the recipe with the _id attached to it
+
+// it works
 
 router.put('/handleRecipes/:recipeId', (req, res) => {
 
@@ -131,19 +122,23 @@ router.put('/handleRecipes/:recipeId', (req, res) => {
                 category: req.body.category
             }
         },
-        {returnOriginal: false}, (err, recipe) => {
+        {returnOriginal: false}, (err, doc) => {
 
-            if (err) console.log(err);
+            if (err) res.send(doc);
 
-            res.json(recipe);
+            res.status(400).send(err);
         });
 
+
+    /*
     Recipe.save().then((doc) => {
             res.send(doc)
         }, (e) => {
             res.status(400).send(e);
         }
     );
+
+    */
 
 
 });
@@ -152,6 +147,8 @@ router.put('/handleRecipes/:recipeId', (req, res) => {
 
 
 // Works
+
+// now I should add what happens to the chefs karma
 
 
 router.put('/:userid/:recipeId/', (req, res) => {
@@ -169,12 +166,20 @@ router.put('/:userid/:recipeId/', (req, res) => {
         postedBy: req.params.userid,
         reviewOf: req.params.recipeId,
         comment: req.body.comment
-    }},{upsert: true, setDefaultsOnInsert: true}).then((doc) => {
-            res.send(doc)
-        }, (e) => {
-            res.status(400).send(e);
-        }
-    );
+    }},{upsert: true, setDefaultsOnInsert: true}, (err, doc) => {
+
+        if (err) res.send(doc);
+
+        res.status(400).send(err);
+    });
+
+    /*
+
+    if (overallRating > 3) {
+
+    }
+
+    */
 
 });
 

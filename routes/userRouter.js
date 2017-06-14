@@ -73,6 +73,23 @@ router.post('/register', function(req, res, next){
 
 });
 
+
+// Get the recipes posted by a particular user
+
+// it works yay, test it one more time with more than one user tho
+
+router.put('/:userid/recipes', (req, res) => {
+
+    let query = {postedBy: req.params.userid};
+
+    Recipe.find(query, (err, recipes) => {
+        if (err) console.log(err);
+
+        res.json(recipes)
+    });
+
+});
+
 /// update the users info
 
 // Not working, redo
@@ -126,54 +143,34 @@ router.put('/:userid/updateUserInfo', (req, res, next) => {
 
 /// delete a user and all of his recipes and reviews based on his _id
 
+/// Works 
+
 router.delete('/:userid/deleteUser', (req, res) => {
 
     let query = {_id: req.params.userid};
 
-    User.findOneAndRemove(query, (err, user) => {
-        if (err) console.log(err);
+    User.findOneAndRemove(query, (err, doc) => {
+        if (err) res.status(400).send(err);
 
-        User.save().then((doc) => {
-            res.send(doc)
-        },
-            (e) => {
-            res.status(400).send(e);
-            }
-        );
-
-
-      Recipe.find({postedBy: req.params.userid}).remove();
-
-      Recipe.save().then(
-          (doc) => {
-              res.send(doc);
-          },
-
-          (e) => {
-              res.status(400).send(e);
-          }
-      );
-
-      Review.find({postedBy: req.params.userid}).remove();
-
-        Review.save().then(
-            (doc) => {
-                res.send(doc);
-            },
-
-            (e) => {
-                res.status(400).send(e);
-            }
-        );
-
-
-
-
-        res.send('The user ' + user + 'was succesfully deleted!');
+        res.send(doc);
     });
 
 
+    let query1 = {postedBy: req.params.userid};
 
-});
+    Recipe.findOneAndRemove(query1, (err) => {
+        if (err) res.status(400).send(err)
+    });
+
+
+    let query2 = {postedBy: req.params.userid};
+
+    Review.findOneAndRemove(query2, (err) => {
+        if (err) res.status(400).send(err);
+    });
+
+
+    });
+
 
 module.exports = router;
