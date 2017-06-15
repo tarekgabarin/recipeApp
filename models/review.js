@@ -6,7 +6,7 @@ const Currency = mongoose.Types.Currency;
 
 let Schema = mongoose.Schema;
 
-let reviewSchema = Schema({
+let reviewSchema = new Schema({
 
 
     rating: {

@@ -7,7 +7,7 @@ const Currency = mongoose.Types.Currency;
 
 let Schema = mongoose.Schema;
 
-let recipeSchema = Schema({
+let recipeSchema = new Schema({
 
   name: {
     type: String,

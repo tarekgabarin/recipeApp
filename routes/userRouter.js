@@ -32,10 +32,16 @@ router.get('/', (req, res, next) => {
 
 /// It works, and it was quick too. The save() stuff is superflous becuase .create() already does that for us,
 // but good stuff overall
+///
 
 router.post('/register', function(req, res, next){
 
     let userid = uuidV4();
+
+    let password = req.body.password;
+
+
+
 
     User.create({
         username: req.body.username,
@@ -53,9 +59,9 @@ router.post('/register', function(req, res, next){
                     user.password = hash;
                 })
             });
-
-
         });
+
+    User.save();
 
     /*
 
@@ -143,7 +149,7 @@ router.put('/:userid/updateUserInfo', (req, res, next) => {
 
 /// delete a user and all of his recipes and reviews based on his _id
 
-/// Works 
+/// Works
 
 router.delete('/:userid/deleteUser', (req, res) => {
 

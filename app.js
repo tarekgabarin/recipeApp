@@ -10,6 +10,7 @@ let config = require('./config');
 let logger = require('morgan');
 let cookieParser = require('cookie-parser');
 const LocalStrategy = require('passport-local').Strategy;
+mongoose.Promise = global.Promise;
 
 mongoose.connect(config.mongoUrl);
 

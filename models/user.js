@@ -6,11 +6,27 @@ const passport = require('passport');
 const validator = require('validator');
 const uuidV4 = require('uuid/v4');
 const {reviewSchema} = require('../models/review');
-
+const {recipeSchema} = require('../models/recipe');
 let Schema = mongoose.Schema;
 
+/*
 
-let User = Schema({
+/*
+
+let LikedDish = new Schema({
+
+    dishId: {
+        type: String,
+        required: true
+    }
+
+});
+
+*/
+
+
+
+let User = new Schema({
 
     name: {
         type: String
@@ -71,7 +87,7 @@ let User = Schema({
         defualt: false
     },
 
-    usersRecipes: [],
+    /// usersRecipes: [],
 
     //usersRecipes: [{type: Schema.Types.ObjectId, ref: 'Recipe'}],
 
@@ -81,9 +97,9 @@ let User = Schema({
         type: Array
     },
 
-    usersLikedRecipes: {
-        type: Array
-    },
+    /// usersLikedRecipes: [LikedDish],
+
+
 
     chefKarma: {
         type: Number,
@@ -99,3 +115,4 @@ let options = ({missingPasswordError: "Incorrect password, try again"});
 User.plugin(passportLocalMongoose, options);
 
 module.exports = mongoose.model('User', User);
+
