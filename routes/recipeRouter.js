@@ -154,7 +154,7 @@ router.put('/handleRecipes/:recipeId', (req, res) => {
 
 router.put('/:userid/:recipeId/', (req, res) => {
 
-
+    let alreadyUpvoted = null;
 
     let overallRating = (Number(req.body.howGoodTaste) + Number(req.body.wouldMakeAgain) + Number(req.body.howEasyToMake))  / 3;
 
@@ -174,10 +174,73 @@ router.put('/:userid/:recipeId/', (req, res) => {
 
     /// New content, test this out.
 
-    if (overallRating > 3) {
+    let checkIfUserReviewed = (userid, recipeId) => {
 
+        return Review
+
+            .findOne({postedBy: userid, reviewOf: recipeId})
+
+            .then((doc) => {
+                console.log(doc);
+
+                if (doc) {
+                    alreadyUpvoted = true;
+                    console.log('user has already submitted a review, alreadyUpvoted is ' + alreadyUpvoted);
+                }
+                else {
+                    alreadyUpvoted = false;
+                    console.log("user has not submitted a review yet, alreadyUpvoted is " + alreadyUpvoted);
+                }
+            })
+            .catch((err) => {
+            console.log(err);
+            })
+    };
+
+
+    checkIfUserReviewed(req.params.userid, req.params.reviewOf);
+
+    // to improve modularity, all the function declarations should be here and them being called will be in the if statements
+
+    let getRecipeMaker = (recipeId) => {
+
+        return Recipe
+
+            .findOne({_id: recipeId})
+            .then((recipe) => {
+                /// So far this is good, this console.log is printing out the field value I want
+                console.log('What is being returned is ' + recipe.postedBy);
+                return recipe.postedBy;
+            })
+            .catch((err) => {
+                console.log(err)
+            });
+    };
+
+
+    let getReviewer = (userid) => {
+
+        return User
+
+            .findOne({_id: userid})
+            .then((user) => {
+                return user._id
+            })
+
+            .catch((err) => {
+                console.log(err);
+            });
+    };
+
+    if (overallRating > 3 && !alreadyUpvoted) {
+
+        alreadyUpvoted = true;
 
         /// Here I make my function that returns the postedBy field value in question
+
+        /*
+
+           /// Moved this to above to improve modularity. If everything goes wrong, just revert back to the changes
 
         let getRecipeMaker = (recipeId) => {
 
@@ -193,6 +256,8 @@ router.put('/:userid/:recipeId/', (req, res) => {
                     console.log(err)
                });
         };
+
+        */
 
 
         let value_ = getRecipeMaker(req.params.recipeId)
@@ -220,86 +285,86 @@ router.put('/:userid/:recipeId/', (req, res) => {
                 });
         });
 
-        /// Now continue from here 
-
-        // let idArray = [];
-
-
         /*
 
-        look at the stackoverflow page on your bookmarks bar, it may be the key to resolve all of this madness
+        let getReviewer = (userid) => {
 
+            return User
 
-        Recipe.findOne({_id: req.params.recipeId}, {postedBy: 1}, (err, poster) => {
-            if (err) res.status(400).send(err);
+                .findOne({_id: userid})
+                .then((user) => {
+                    return user._id
+                })
 
-            // value_ = poster.postedBy;
-
-            console.log("Whenever I console.log(poster.postedBy) it returns " + poster.postedBy);
-
-            // console.log("Whenever I console.log(poster)" + poster);
-
-            // console.log('value_ is ' + value_);
-
-           // idArray.push(poster.postedBy);
-
-            return poster.postedBy;
-
-
-        });
-
-        this approach isn't working, I need to find another way to get the postedBy value of the recipe to have the _id
-        of the person who made the recipe
+                .catch((err) => {
+                    console.log(err);
+                });
+        };
 
         */
 
-        // console.log("value_ is now " + value_.get('postedBy'));
+        let upVoterId = getReviewer(req.params.userid)
+            .then((voter) => {
 
-        // console.log("idArray is now " + idArray[0]);
-
-       /// console.log('the function is returning ' + printThis);
-
-
-
-       // console.log("the following is userWhoMade recipe     " + userWhoMadeRecipe);
-
-        /*
-
-
-
-        /*
-
-
-        User.update({_id: userWhoMadeRecipe}, {
-            $inc: {
-                chefKarma: 1
-            }});
-
-
-        /*
-        let dish = new LikedDish({
-            dishId: req.params.recipeId
+                console.log("voter id is " + voter);
+                return voter
         });
 
-        */
+        upVoterId.then((user) => {
+            User.update({_id: user}, {$addToSet: {usersFavouriteRecipes: req.params.recipeId}}, (err, doc) => {
+
+                if (err) console.log(err);
+                console.log(doc);
+            });
+        })
+    }
+
+    if (overallRating < 3) {
 
 
-        // User.update({_id: req.params.userid}, {$push: {usersFavouriteRecipes: req.params.recipeId}});
+        let value_ = getRecipeMaker(req.params.recipeId)
+            .then((chef) => {
 
+                console.log('chef is ' + chef);
+                return chef;
 
-        /*
-        Recipe.find({_id: req.params.recipeId}, (err, recipe) => {
-            if (err) res.status(400).send(err);
+            });
 
-          //  User.update({_id: req.params.userid}, {$push: {usersLikedRecipes: {recipe}}});
-
-            //userWhoLikedRecipe.usersLikedRecipes.push(recipe);
-
+        value_.then((chef) => {
+            console.log(chef);
+            User.update({_id: chef}, {
+                    $inc: {
+                        chefKarma: -1
+                    }
+                },
+                (err, doc) => {
+                    if (err) console.log(err);
+                    console.log(doc);
+                });
         });
+    }
 
-        */
+     if (overallRating < 3 && alreadyUpvoted) {
+
+            let upVoterId = getReviewer(req.params.userid)
+                .then((voter) => {
+
+                    console.log("voter id is " + voter);
+                    return voter
+                });
+
+
+            upVoterId.then((user) => {
+                User.update({_id: user}, {$pull: {usersFavouriteRecipes: req.params.recipeId}}, (err, doc) => {
+
+                    if (err) console.log(err);
+                    console.log(doc);
+                });
+            })
 
     }
+
+
 
 });
 
