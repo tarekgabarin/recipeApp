@@ -1,0 +1,338 @@
+router.put('/:userid/:recipeId/', (req, res) => {
+
+
+    votingRecord = {
+        alreadyVoted: undefined,
+        alreadyDownvoted: undefined,
+        alreadyUpvoted: undefined
+    };
+
+    let overallRating = (Number(req.body.howGoodTaste) + Number(req.body.wouldMakeAgain) + Number(req.body.howEasyToMake))  / 3;
+
+
+    /// The root of the problem is that all the votingRecord stuff is undefined still
+    ///// Maybe remove the line below and have all the code in the then statement be outside a callback so that it runs first
+
+    let checkIfUserReviewed = (userid, recipeId) => {
+
+        return Review
+
+            .findOne({postedBy: userid, reviewOf: recipeId})
+
+            /// becuase this is in a callback it doesn't run when it should rework this
+            .then((doc) => {
+                console.log(doc);
+
+                if (doc) {
+
+                     votingRecord.alreadyVoted = true;
+
+                     console.log('user has already submitted a review, alreadyVoted is ' + votingRecord.alreadyVoted);
+
+                    if (votingRecord.alreadyVoted === true){
+
+                        if (doc.rating > 3){
+
+                            console.log('doc.rating is ...' + String(doc.rating));
+
+                            votingRecord.alreadyUpvoted = true;
+                            votingRecord.alreadyDownvoted = false;
+                        }
+                        else if (doc.rating < 3){
+
+                            console.log('doc.rating is ...' + String(doc.rating));
+
+                            votingRecord.alreadyDownvoted = true;
+                            votingRecord.alreadyUpvoted = false;
+                        }
+                    }
+
+                }
+                else {
+                    votingRecord.alreadyVoted = false;
+                    console.log("user has not submitted a review yet, alreadyVoted is " + votingRecord.alreadyVoted);
+                    votingRecord.alreadyDownvoted = false;
+                    votingRecord.alreadyUpvoted = false;
+                }
+
+
+
+            })
+            .catch((err) => {
+                console.log(err);
+            })
+    };
+
+    checkIfUserReviewed(req.params.userid, req.params.reviewOf).then((votingHistory) => {
+        console.log('record ' + votingHistory);
+        return votingHistory;
+    });
+
+
+
+    Review.update({postedBy: req.params.userid, reviewOf: req.params.recipeId}, {$set: {
+        howEasyToMake: req.body.howEasyToMake,
+        wouldMakeAgain: req.body.wouldMakeAgain,
+        howGoodTaste: req.body.howGoodTaste,
+        rating: overallRating,
+        postedBy: req.params.userid,
+        reviewOf: req.params.recipeId,
+        comment: req.body.comment
+    }},{upsert: true, setDefaultsOnInsert: true}, (err, doc) => {
+
+        if (err) res.status(400).send(err);
+
+    });
+
+    /// New content, test this out.
+
+
+    /*
+
+    if (overallRating > 3) {
+        alreadyUpvoted = true;
+        alreadyDownvoted = false;
+    }
+    else if (overallRating < 3) {
+        alreadyDownvoted = true;
+        alreadyUpvoted = false;
+    }
+
+
+    /*
+
+    I realized this should run before Review.create()
+
+    let checkIfUserReviewed = (userid, recipeId) => {
+
+        Review
+
+            .findOne({postedBy: userid, reviewOf: recipeId})
+
+            .then((doc) => {
+                console.log(doc);
+
+                if (doc) {
+                    alreadyVoted = true;
+                    console.log('user has already submitted a review, alreadyUpvoted is ' + alreadyUpvoted);
+
+                    if (doc.rating > 3){
+                        alreadyUpvoted = true;
+                        alreadyDownvoted = false;
+
+                        console.log("alreadyUpvoted is..." + alreadyVoted);
+                        console.log("alreadyDownvoted is ..." + alreadyDownvoted);
+
+                    }
+                    else if (doc.rating < 3){
+                        alreadyDownvoted = true;
+                        alreadyUpvoted = false;
+
+                        console.log("alreadyUpvoted is..." + alreadyVoted);
+                        console.log("alreadyDownvoted is ..." + alreadyDownvoted);
+                    }
+
+                }
+                else {
+                    alreadyVoted = false;
+                    console.log("user has not submitted a review yet, alreadyUpvoted is " + alreadyUpvoted);
+                }
+            })
+            .catch((err) => {
+            console.log(err);
+            })
+    };
+
+    */
+
+
+    /// checkIfUserReviewed(req.params.userid, req.params.reviewOf);
+
+    // to improve modularity, all the function declarations should be here and them being called will be in the if statements
+
+    let getRecipeMaker = (recipeId) => {
+
+        return Recipe
+
+            .findOne({_id: recipeId})
+            .then((recipe) => {
+                /// So far this is good, this console.log is printing out the field value I want
+                console.log('What is being returned is ' + recipe.postedBy);
+                return recipe.postedBy;
+            })
+            .catch((err) => {
+                console.log(err)
+            });
+    };
+
+
+    let getReviewer = (userid) => {
+
+        return User
+
+            .findOne({_id: userid})
+            .then((user) => {
+                return user._id
+            })
+
+            .catch((err) => {
+                console.log(err);
+            });
+    };
+
+    /// Needs some redoing, a user can upvote a dish twice
+
+    console.log('About to enter the first if statement. Status check...');
+
+    console.log("alreadyUpvoted: " + votingRecord.alreadyUpvoted);
+
+    console.log("overallRating: " + String(overallRating));
+
+    console.log("alreadyVoted: " + votingRecord.alreadyVoted);
+
+    if (!votingRecord.alreadyUpvoted || (overallRating > 3 && !votingRecord.alreadyVoted)) {
+
+
+
+        /// Here I make my function that returns the postedBy field value in question
+
+        /*
+
+           /// Moved this to above to improve modularity. If everything goes wrong, just revert back to the changes
+
+        let getRecipeMaker = (recipeId) => {
+
+           return Recipe
+
+               .findOne({_id: recipeId})
+               .then((recipe) => {
+                    /// So far this is good, this console.log is printing out the field value I want
+                    console.log('What is being returned is ' + recipe.postedBy);
+                   return recipe.postedBy;
+               })
+               .catch((err) => {
+                    console.log(err)
+               });
+        };
+
+        */
+
+
+        let value_ = getRecipeMaker(req.params.recipeId)
+            .then((chef) => {
+
+                console.log('chef is ' + chef);
+                return chef;
+
+            });
+
+        /// Here I am updating the karma of the user who made the recipe if the other person gives it a 4 or 5
+
+        //// this works
+
+
+        value_.then((chef) => {
+            console.log(chef);
+            User.update({_id: chef}, {
+                $inc: {
+                    chefKarma: 1
+                }},
+                (err, doc) => {
+                if (err) console.log(err);
+                console.log(doc);
+                });
+        });
+
+        /*
+
+        let getReviewer = (userid) => {
+
+            return User
+
+                .findOne({_id: userid})
+                .then((user) => {
+                    return user._id
+                })
+
+                .catch((err) => {
+                    console.log(err);
+                });
+        };
+
+        */
+
+        let upVoterId = getReviewer(req.params.userid)
+            .then((voter) => {
+
+                console.log("voter id is " + voter);
+                return voter
+        });
+
+        upVoterId.then((user) => {
+            User.update({_id: user}, {$addToSet: {usersFavouriteRecipes: req.params.recipeId}}, (err, doc) => {
+
+                if (err) console.log(err);
+                console.log(doc);
+            });
+        })
+    }
+
+    console.log("alreadyDownvoted: " + votingRecord.alreadyDownvoted);
+
+    console.log("overallRating: " + String(overallRating));
+
+    console.log("alreadyVoted: " + votingRecord.alreadyVoted);
+
+    if (!votingRecord.alreadyDownvoted || ((overallRating < 3) && !votingRecord.alreadyVoted)) {
+
+
+        let value_ = getRecipeMaker(req.params.recipeId)
+            .then((chef) => {
+
+                console.log('chef is ' + chef);
+                return chef;
+
+            });
+
+        value_.then((chef) => {
+            console.log(chef);
+            User.update({_id: chef}, {
+                    $inc: {
+                        chefKarma: -1
+                    }
+                },
+                (err, doc) => {
+                    if (err) console.log(err);
+                    console.log(doc);
+                });
+        });
+    }
+
+     if (overallRating < 3 && votingRecord.alreadyUpvoted) {
+
+
+        /// add
+
+            let upVoterId = getReviewer(req.params.userid)
+                .then((voter) => {
+
+                    console.log("voter id is " + voter);
+                    return voter
+                });
+
+
+            upVoterId.then((user) => {
+
+                console.log('User is ' + user);
+                User.update({_id: user}, {$pull: {usersFavouriteRecipes: req.params.recipeId}}, (err, doc) => {
+
+                    if (err) console.log(err);
+                    console.log(doc);
+                });
+            })
+
+    }
+
+
+
+});

@@ -18,6 +18,16 @@ let router = express.Router();
 router.use(bodyParser.json());
 
 
+/// I think I learned today that you only save model instances, not the Mongoose model classes, I'll double chekc
+/// But it sounds like it.
+
+/// If you have an instance, call instance.save(); don't do it on a class model
+
+
+
+
+
+
 /// Works
 
 router.get('/', (req, res, next) => {
@@ -108,6 +118,9 @@ router.put('/:userid/updateUserInfo', (req, res, next) => {
 
     let updatedFields = req.body;
 
+
+    //// Maybe something to do with it not being or being a string?
+
     User.findByIdAndUpdate(userid, updatedFields).lean(true).then(
 
         (doc) => {
@@ -149,7 +162,7 @@ router.put('/:userid/updateUserInfo', (req, res, next) => {
 
 /// delete a user and all of his recipes and reviews based on his _id
 
-/// Works
+/// Works ----> Changed it, test it out to see if still works
 
 router.delete('/:userid/deleteUser', (req, res) => {
 
@@ -164,16 +177,34 @@ router.delete('/:userid/deleteUser', (req, res) => {
 
     let query1 = {postedBy: req.params.userid};
 
-    Recipe.findOneAndRemove(query1, (err) => {
+    Recipe.remove(query1, (err) => {
         if (err) res.status(400).send(err)
     });
 
 
+    /*
+
+    Recipe.find(query1, (err) => {
+        if (err) res.status(400).send(err)
+    }).remove();
+
+    */
+
+
     let query2 = {postedBy: req.params.userid};
+
+    Review.remove(query2, (err) => {
+        if (err) res.status(400).send(err);
+    });
+
+
+    /*
 
     Review.findOneAndRemove(query2, (err) => {
         if (err) res.status(400).send(err);
     });
+
+    */
 
 
     });

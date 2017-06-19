@@ -91,15 +91,19 @@ let User = new Schema({
 
     //usersRecipes: [{type: Schema.Types.ObjectId, ref: 'Recipe'}],
 
-   /// usersReviews: [{type: Schema.Types.ObjectId, ref: 'Review'}],
+    usersReviews: [{type: Schema.Types.ObjectId, ref: 'Review'}],
 
     usersFavouriteRecipes: {
         type: Array
     },
 
+    creationDate: {
+        type: Number,
+        default: new Date().getMonth(),
+        index: true
+    },
+
     /// usersLikedRecipes: [LikedDish],
-
-
 
     chefKarma: {
         type: Number,
@@ -115,4 +119,3 @@ let options = ({missingPasswordError: "Incorrect password, try again"});
 User.plugin(passportLocalMongoose, options);
 
 module.exports = mongoose.model('User', User);
-
